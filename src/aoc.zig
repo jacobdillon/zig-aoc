@@ -1,4 +1,5 @@
 const std = @import("std");
+const print = @import("std").debug.print;
 
 pub fn day1_part1(input: []const u8) !u32 {
     var result: u32 = 0;
@@ -278,4 +279,86 @@ pub fn day3_part2(input: []const u8) !u32 {
     }
 
     return result;
+}
+
+pub fn day4_part1(input: []const u8) !u32 {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var result: u32 = 0;
+
+    var lines = std.mem.tokenizeAny(u8, input, "\n");
+    while (lines.next()) |line| {
+        var winners_set = std.AutoHashMap(u8, void).init(allocator);
+        //var my_nums_list = std.ArrayList(u8).init(allocator);
+        var card_result: u32 = 0;
+
+        var num_sets = std.mem.tokenizeAny(u8, line[std.mem.indexOf(u8, line, ":").? + 1..], "|");
+        var winners_it = std.mem.tokenizeAny(u8, num_sets.next().?, " ");
+        var my_nums_it = std.mem.tokenizeAny(u8, num_sets.next().?, " ");
+
+        while (winners_it.next()) |winner_str| {
+            try winners_set.put(try std.fmt.parseInt(u8, winner_str, 10), {});
+        }
+
+        while (my_nums_it.next()) |my_nums_str| {
+            const num = try std.fmt.parseInt(u8, my_nums_str, 10);
+            if (winners_set.contains(num)) {
+                if (card_result == 0) {
+                    card_result = 1;
+                } else {
+                    card_result *= 2;
+                }
+            }
+        }
+        result += card_result;
+    }
+
+    return result;
+}
+
+pub fn day4_part2(input: []const u8) !u32 {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var result: u32 = 0;
+
+    var won_cards = std.AutoHashMap(u8, u32).init(allocator);
+
+    var card_num: u8 = 1;
+    var lines = std.mem.tokenizeAny(u8, input, "\n");
+    while (lines.next()) |line| : (card_num += 1){
+        var winners_set = std.AutoHashMap(u8, void).init(allocator);
+        var matching_numbers: u32 = 0;
+
+        var num_sets = std.mem.tokenizeAny(u8, line[std.mem.indexOf(u8, line, ":").? + 1..], "|");
+        var winners_it = std.mem.tokenizeAny(u8, num_sets.next().?, " ");
+        var my_nums_it = std.mem.tokenizeAny(u8, num_sets.next().?, " ");
+
+        while (winners_it.next()) |winner_str| {
+            try winners_set.put(try std.fmt.parseInt(u8, winner_str, 10), {});
+        }
+
+        while (my_nums_it.next()) |my_nums_str| {
+            const num = try std.fmt.parseInt(u8, my_nums_str, 10);
+            if (winners_set.contains(num)) {
+                matching_numbers += 1;
+            }
+        }
+
+        const num_current_cards = won_cards.get(card_num) orelse 1;
+        const cards_won = num_current_cards * matching_numbers;
+
+        result += cards_won;
+
+        if (matching_numbers != 0) {
+            for (card_num + 1..card_num + 1 + matching_numbers) |current_card| {
+                try won_cards.put(@intCast(current_card), (won_cards.get(@intCast(current_card)) orelse 1) + num_current_cards);
+            }
+        }
+    }
+
+    return result + card_num - 1;
 }
