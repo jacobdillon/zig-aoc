@@ -354,3 +354,38 @@ pub fn day4_part2(input: []const u8) !u32 {
 
     return result + card_num - 1;
 }
+
+pub fn day5_part1(input: []const u8) !u32 {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    const allocator = arena.allocator();
+
+    var result: u32 = 0;
+
+    var seed_set = std.AutoHashMap(u8, void).init(allocator);
+    var seed_to_soil = std.AutoHashMap(u32, u32).init(allocator);
+    _ = seed_to_soil;
+    var soil_to_fertilizer = std.AutoHashMap(u32, u32).init(allocator);
+    _ = soil_to_fertilizer;
+    var fertilizer_to_water = std.AutoHashMap(u32, u32).init(allocator);
+    _ = fertilizer_to_water;
+    var water_to_light = std.AutoHashMap(u32, u32).init(allocator);
+    _ = water_to_light;
+    var light_to_temperature = std.AutoHashMap(u32, u32).init(allocator);
+    _ = light_to_temperature;
+    var temperature_to_humidity = std.AutoHashMap(u32, u32).init(allocator);
+    _ = temperature_to_humidity;
+    var humidity_to_location = std.AutoHashMap(u32, u32).init(allocator);
+    _ = humidity_to_location;
+
+    var seed_strs_it = std.mem.tokenizeAny(u8, input[0..std.mem.indexOf(u8, input, "\n").?], " ");
+    while (seed_strs_it.next()) |seed_str| {
+        try seed_set.put(try std.fmt.parseInt(u8, seed_str, 10), 0);
+    }
+
+    var maps_it = std.mem.tokenizeAny(u8, input[std.mem.indexOf(u8, input, "\n")..], "map:");
+    maps_it.next();
+
+
+    return result;
+}
