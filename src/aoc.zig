@@ -1,48 +1,33 @@
 const std = @import("std");
 const print = @import("std").debug.print;
+const utils = @import("utils.zig");
 
 pub fn day1_part1(input: []const u8) !u32 {
     var result: u32 = 0;
 
     var lines = std.mem.tokenizeAny(u8, input, "\n");
     while (lines.next()) |line| {
-        var first_num: ?u8 = null;
-        var last_num: ?u8 = null;
+        var found_first = false;
+        var found_last = false;
 
-        for (line) |char| {
-            if (std.ascii.isDigit(char)) {
-                if (first_num == null) {
-                    first_num = char - '0';
-                }
-                last_num = char - '0';
+        for (0..line.len) |pos| {
+            if (!found_first and std.ascii.isDigit(line[pos])) {
+                result += (line[pos] - '0') * 10;
+                found_first = true;
+            }
+
+            if (!found_last and std.ascii.isDigit(line[line.len - pos - 1])) {
+                result += line[line.len - pos - 1] - '0';
+                found_last = true;
+            }
+
+            if (found_first and found_last) {
+                break;
             }
         }
-
-        result += ((first_num orelse 0) * 10) + (last_num orelse 0);
     }
 
     return result;
-}
-
-fn getSliceEnglishNumValue(slice: []const u8) ?u8 {
-    const strnum_map_tuples = .{
-        .{ "one", 1 },
-        .{ "two", 2 },
-        .{ "three", 3 },
-        .{ "four", 4 },
-        .{ "five", 5 },
-        .{ "six", 6 },
-        .{ "seven", 7 },
-        .{ "eight", 8 },
-        .{ "nine", 9 }};
-    const lens_to_check = [_]u8 {3, 4, 5};
-    const strnum_map = std.ComptimeStringMap(u8, strnum_map_tuples);
-    for (lens_to_check) |len| {
-        if (slice.len >= len and strnum_map.has(slice[0..len])) {
-            return strnum_map.get(slice[0..len]);
-        }
-    }
-    return null;
 }
 
 pub fn day1_part2(input: []const u8) !u32 {
@@ -50,27 +35,35 @@ pub fn day1_part2(input: []const u8) !u32 {
 
     var lines = std.mem.tokenizeAny(u8, input, "\n");
     while (lines.next()) |line| {
-        var first_num: ?u8 = null;
-        var last_num: ?u8 = null;
+        var found_first = false;
+        var found_last = false;
 
-        for (line, 0..) |char, index| {
-            if (std.ascii.isDigit(char)) {
-                if (first_num == null) {
-                    first_num = char - '0';
-                }
-                last_num = char - '0';
-            } else {
-                const num_value = getSliceEnglishNumValue(line[index..]);
-                if (num_value != null) {
-                    if (first_num == null) {
-                        first_num = num_value;
-                    }
-                    last_num = num_value;
+        for (0..line.len) |pos| {
+            if (!found_first) {
+                if (std.ascii.isDigit(line[pos])) {
+                    result += (line[pos] - '0') * 10;
+                    found_first = true;
+                } else if (utils.englishStringToNumber(line[pos..])) |value| {
+                    result += value * 10;
+                    found_first = true;
                 }
             }
-        }
 
-        result += ((first_num orelse 0) * 10) + (last_num orelse 0);
+            if (!found_last) {
+                const idx = line.len - pos - 1;
+                if (std.ascii.isDigit(line[idx])) {
+                    result += line[idx] - '0';
+                    found_last = true;
+                } else if (utils.englishStringToNumber(line[idx..])) |value| {
+                    result += value;
+                    found_last = true;
+                }
+            }
+
+            if (found_first and found_last) {
+                break;
+            }
+        }
     }
 
     return result;
@@ -78,8 +71,8 @@ pub fn day1_part2(input: []const u8) !u32 {
 
 pub fn day2_part1(input: []const u8) !u32 {
     var result: u32 = 0;
-    var game_id: u32 = 1;
 
+    var game_id: u32 = 1;
     var lines = std.mem.tokenizeAny(u8, input, "\n");
     while (lines.next()) |line| : (game_id += 1)  {
         var line_failed = false;
@@ -291,7 +284,6 @@ pub fn day4_part1(input: []const u8) !u32 {
     var lines = std.mem.tokenizeAny(u8, input, "\n");
     while (lines.next()) |line| {
         var winners_set = std.AutoHashMap(u8, void).init(allocator);
-        //var my_nums_list = std.ArrayList(u8).init(allocator);
         var card_result: u32 = 0;
 
         var num_sets = std.mem.tokenizeAny(u8, line[std.mem.indexOf(u8, line, ":").? + 1..], "|");
